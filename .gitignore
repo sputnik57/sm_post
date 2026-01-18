@@ -1,0 +1,7 @@
+supabase/
+n8n/
+docs/
+*.md
+*.docx
+node_modules/
+.env
