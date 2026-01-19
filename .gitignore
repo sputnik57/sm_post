@@ -1,7 +1,7 @@
 supabase/
 n8n/
 docs/
-*.md
-*.docx
+docs/*.md
+docs/*.docx
 node_modules/
 .env
