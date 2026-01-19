@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/Button';
 import { Loader2, RefreshCw, Copy, Download, Share2 } from 'lucide-react';
 
-import { triggerCopyGeneration } from '@/lib/api_old';
+import { triggerCopyGeneration } from '@/lib/api';
 
 export default function Step5Generate() {
     const { setStep, brief, style, brandProfile, assets, generatedContent, setGeneratedContent } = useAppStore();
