@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { getSupabase } from '@/lib/supabase';
+const supabase = getSupabase();
 import { BrandProfile } from '@/types';
 
 // NOTE: In a real app with RLS, these should be called server-side or with a session.
