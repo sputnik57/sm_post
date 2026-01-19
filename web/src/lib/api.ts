@@ -1,11 +1,11 @@
 import { getSupabase } from './supabase';
-const supabase = getSupabase();
 import { BrandProfile } from '@/types';
 
 // NOTE: In a real app with RLS, these should be called server-side or with a session.
 // For the prototype, we assume public/anon usage or simple implementation.
 
 export const fetchBrandProfile = async (id: string): Promise<BrandProfile | null> => {
+    const supabase = getSupabase();
     const { data, error } = await supabase
         .from('brand_profiles')
         .select('*')
@@ -21,6 +21,7 @@ export const fetchBrandProfile = async (id: string): Promise<BrandProfile | null
 };
 
 export const saveBrandProfile = async (profile: BrandProfile) => {
+    const supabase = getSupabase();
     // Explicitly map camelCase to snake_case for Supabase
     const dbProfile = {
         id: profile.id,
