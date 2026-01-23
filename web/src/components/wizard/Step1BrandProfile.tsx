@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { Textarea } from '@/components/ui/Textarea';
 import { Loader2 } from 'lucide-react';
-import { saveBrandProfile } from '@/lib/api_old';
+import { saveBrandProfile } from '@/lib/api';
 
 export default function Step1BrandProfile() {
     const { setStep, setBrandProfile, brandProfile } = useAppStore();
