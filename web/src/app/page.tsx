@@ -1,3 +1,7 @@
+import WizardLayout from '@/components/wizard/WizardLayout';
+
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#FAFAFA] py-12">
@@ -18,10 +22,7 @@ export default function Home() {
           </p>
         </header>
 
-        {/* TEMPORARILY REPLACED */}
-        <div className="text-center mt-8 text-2xl">
-          <strong>TEST CONTENT - If you see this, WizardLayout was the issue.</strong>
-        </div>
+        <WizardLayout />
       </div>
     </main>
   );
