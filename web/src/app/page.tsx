@@ -15,10 +15,10 @@ export default function Home() {
             </div>
           </div>
           <h1 className="text-5xl font-black tracking-tight text-gray-900">
-            Social<span className="text-brand-red">Post</span> AI
+            Generate 5 <span className="text-brand-red">Viral Hooks</span> in 30 seconds
           </h1>
           <p className="text-lg text-gray-500 max-w-xl mx-auto">
-            Generate on-brand social media content with the power of n8n workflows and AI.
+            Generate on-brand social media content with the power of n8n workflows and AI!
           </p>
         </header>
 

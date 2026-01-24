@@ -69,7 +69,7 @@ export default function Step1BrandProfile() {
         <Card className="w-full max-w-2xl mx-auto shadow-lg border-t-4 border-brand-red">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                    Establish Your Brand Identity
+                    Establish Your Brand Identity in Text
                 </CardTitle>
                 <CardDescription>
                     Define how your brand speaks and looks. This profile will guide the AI to stay on-brand.
