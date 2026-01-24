@@ -61,3 +61,34 @@ export const triggerCopyGeneration = async (payload: any) => {
     if (!res.ok) throw new Error('Generation failed');
     return res.json();
 };
+
+export const uploadAsset = async (file: File): Promise<string> => {
+    const supabase = getSupabase();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+        .from('assets')
+        .upload(filePath, file);
+
+    if (error) {
+        throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+};
+
+export const triggerImageGeneration = async (payload: any) => {
+    const res = await fetch('/api/generate/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Image generation failed');
+    return res.json();
+};
