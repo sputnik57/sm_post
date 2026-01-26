@@ -32,7 +32,7 @@ export default function Step5Generate() {
             };
 
             const result = await triggerCopyGeneration(payload);
-            console.log('Generation Result:', result);
+            console.log('📥 [STEP5] Generation Result:', result);
 
             // Parsing the n8n/LLM response - handles different model formats
             // OpenAI: { message: { content: "..." } }
@@ -55,23 +55,119 @@ export default function Step5Generate() {
             else if (result.choices && result.choices[0]) contentText = result.choices[0].message?.content || "";
             else contentText = JSON.stringify(result, null, 2); // Fallback debug view
 
-            // Create a result card for each requested platform (mocking distribution of the single response for now)
-            // In a real flow, n8n should return an array of platform-specific posts.
-            const newContent: GeneratedContent[] = payload.platforms.map((p: any) => ({
-                id: crypto.randomUUID(),
-                platform: p,
-                status: 'completed',
-                content: contentText, // In reality, we'd parse specific sections for each platform
-                imageUrls: assets.length > 0 ? [assets[0].previewUrl] : []
-            }));
+            console.log('📄 [STEP5] Full LLM Response:', contentText);
 
-            setGeneratedContent(newContent);
+            // NEW: Parse platform-specific sections from the LLM response
+            const parsedContent = parsePlatformContent(contentText, payload.platforms);
+            console.log('✂️ [STEP5] Parsed Platform Content:', parsedContent);
+
+            setGeneratedContent(parsedContent);
 
         } catch (error) {
-            console.error("Generation failed", error);
+            console.error("❌ [STEP5] Generation failed:", error);
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    /**
+     * Parse platform-specific content from LLM response
+     * Expected format from Claude:
+     * 
+     * **1. POST 1: [Topic]**
+     * 
+     * **Instagram version:**
+     * [content]
+     * ---
+     * **LinkedIn version:**
+     * [content]
+     * ---
+     */
+    const parsePlatformContent = (fullText: string, platforms: string[]): GeneratedContent[] => {
+        const platformContent: { [key: string]: string[] } = {};
+
+        // Initialize arrays for each platform
+        platforms.forEach(platform => {
+            platformContent[platform] = [];
+        });
+
+        // Split by post numbers to get individual posts
+        const postSections = fullText.split(/\*\*\d+\.\s+POST\s+\d+:/i);
+
+        // Process each post section
+        postSections.forEach((section, index) => {
+            if (!section.trim()) return; // Skip empty sections
+
+            // Extract post title if present
+            const titleMatch = section.match(/^([^*\n]+)/);
+            const postTitle = titleMatch ? titleMatch[1].trim().replace(/\*\*$/, '') : '';
+
+            // Try to parse platform-specific content within this post
+            platforms.forEach(platform => {
+                const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+
+                // Match various formats:
+                // **Instagram version:**
+                // === INSTAGRAM ===
+                // Instagram:
+                const patterns = [
+                    new RegExp(`\\*\\*${platformName} version:\\*\\*([\\s\\S]*?)(?=\\*\\*\\w+\\s+version:|---|$)`, 'i'),
+                    new RegExp(`===\\s*${platformName.toUpperCase()}\\s*===([\\s\\S]*?)(?====|---|$)`, 'i'),
+                    new RegExp(`${platformName}:([\\s\\S]*?)(?=\\w+:|---|$)`, 'i')
+                ];
+
+                for (const pattern of patterns) {
+                    const match = section.match(pattern);
+                    if (match) {
+                        let content = match[1].trim().replace(/^-+$/gm, '').trim();
+
+                        // Prepend post title if we have one
+                        if (postTitle && index > 0) { // index > 0 because first split is before "POST 1"
+                            content = `**POST ${index}: ${postTitle}**\n\n${content}`;
+                        }
+
+                        platformContent[platform].push(content);
+                        break; // Found match, stop trying other patterns
+                    }
+                }
+            });
+        });
+
+        console.log('🔍 [PARSE] Platform content extracted:', platformContent);
+
+        // If parsing failed, fall back to showing the full text for all platforms
+        const anyPlatformHasContent = Object.values(platformContent).some(arr => arr.length > 0);
+
+        if (!anyPlatformHasContent) {
+            console.warn('⚠️ [PARSE] Could not parse platform-specific content, using full text for all platforms');
+            // Split by post numbers (1., 2., 3.) as fallback
+            const postMatches = [...fullText.matchAll(/\d+\.\s+([\s\S]*?)(?=\d+\.\s+|$)/g)];
+            const fallbackPosts = postMatches.map(match => match[1].trim()).filter(p => p.length > 0);
+
+            return platforms.map(platform => ({
+                id: crypto.randomUUID(),
+                platform: platform as any,
+                status: 'completed' as const,
+                content: fallbackPosts.length > 0 ? fallbackPosts.join('\n\n---\n\n') : fullText,
+                imageUrls: assets.length > 0 ? [assets[0].previewUrl] : []
+            }));
+        }
+
+        // Build GeneratedContent array with parsed platform-specific content
+        return platforms.map(platform => {
+            const posts = platformContent[platform];
+            const combinedContent = posts.length > 0
+                ? posts.join('\n\n━━━━━━━━━━━━━━━━\n\n') // Visual separator between posts
+                : 'No content generated for this platform.';
+
+            return {
+                id: crypto.randomUUID(),
+                platform: platform as any,
+                status: 'completed' as const,
+                content: combinedContent,
+                imageUrls: assets.length > 0 ? [assets[0].previewUrl] : []
+            };
+        });
     };
 
     if (isGenerating) {

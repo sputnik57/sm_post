@@ -1,11 +1,11 @@
-import { getSupabase } from './supabase';
+import { createClient } from './supabase-client';
 import { BrandProfile } from '@/types';
 
 // NOTE: In a real app with RLS, these should be called server-side or with a session.
 // For the prototype, we assume public/anon usage or simple implementation.
 
 export const fetchBrandProfile = async (id: string): Promise<BrandProfile | null> => {
-    const supabase = getSupabase();
+    const supabase = createClient();
     const { data, error } = await supabase
         .from('brand_profiles')
         .select('*')
@@ -21,7 +21,17 @@ export const fetchBrandProfile = async (id: string): Promise<BrandProfile | null
 };
 
 export const saveBrandProfile = async (profile: BrandProfile) => {
-    const supabase = getSupabase();
+    const supabase = createClient();
+
+    console.log('📤 [API] Saving brand profile to Supabase...');
+    console.log('📤 [API] Received profile:', profile);
+    console.log('📤 [API] Cultural fields:', {
+        clientCommunities: profile.clientCommunities,
+        clientCommunitiesCustom: profile.clientCommunitiesCustom,
+        coreValues: profile.coreValues,
+        contentToAvoid: profile.contentToAvoid
+    });
+
     // Explicitly map camelCase to snake_case for Supabase
     const dbProfile = {
         id: profile.id,
@@ -38,7 +48,15 @@ export const saveBrandProfile = async (profile: BrandProfile) => {
         visual_dos_and_donts: profile.visualDosAndDonts,
         competitors: profile.competitors,
         target_platforms: profile.targetPlatforms,
+        // NEW: Cultural sensitivity fields
+        client_communities: profile.clientCommunities,
+        client_communities_custom: profile.clientCommunitiesCustom,
+        core_values: profile.coreValues,
+        content_to_avoid: profile.contentToAvoid,
+        detailed_communities: profile.detailedCommunities, // Progressive disclosure data
     };
+
+    console.log('📤 [API] Mapped to DB format:', dbProfile);
 
     const { data, error } = await supabase
         .from('brand_profiles')
@@ -46,9 +64,15 @@ export const saveBrandProfile = async (profile: BrandProfile) => {
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) {
+        console.error('❌ [API] Supabase error:', error);
+        throw error;
+    }
+
+    console.log('✅ [API] Successfully saved to Supabase:', data);
     return data;
 };
+
 
 // n8n connection helpers would go here (server-side mostly)
 export const triggerCopyGeneration = async (payload: any) => {
@@ -63,7 +87,7 @@ export const triggerCopyGeneration = async (payload: any) => {
 };
 
 export const uploadAsset = async (file: File): Promise<string> => {
-    const supabase = getSupabase();
+    const supabase = createClient();
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
